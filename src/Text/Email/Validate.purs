@@ -43,4 +43,4 @@ validate = lmap show <<< runEmailParser
 
 -- | Run a parser for an input string, returning either an error or a result.
 runEmailParser :: String -> Either ParseError EmailAddress
-runEmailParser s = runParser addrSpec s
+runEmailParser = runParser addrSpec
