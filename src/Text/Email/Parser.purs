@@ -16,12 +16,19 @@ import Data.Either (Either (..))
 import Data.Char (fromCharCode)
 import Data.Foldable (fold, intercalate)
 import Data.Generic (class Generic, gEq)
+import Data.Enum (enumFromTo)
 import Data.List (List)
+import Data.NonEmpty (NonEmpty (..))
 import Data.String (Pattern(..), contains, fromCharArray, singleton)
 import Data.Argonaut (class EncodeJson, class DecodeJson, encodeJson, decodeJson, fail)
 import Text.Parsing.StringParser (Parser, runParser)
 import Text.Parsing.StringParser.Combinators (many, many1, optional, sepBy1)
 import Text.Parsing.StringParser.String (char, eof, satisfy)
+import Test.QuickCheck (class Arbitrary)
+import Test.QuickCheck.Gen (Gen, elements, arrayOf1)
+import Partial.Unsafe (unsafePartial)
+
+
 
 -- | Represents an email address.
 newtype EmailAddress = EmailAddress { localPart :: String
@@ -37,6 +44,18 @@ instance decodeJsonEmailAddress :: DecodeJson EmailAddress where
     case runParser addrSpec s of
       Left e -> fail (show e)
       Right x -> pure x
+
+instance arbitraryEmailAddress :: Arbitrary EmailAddress where
+  arbitrary = do
+    user <- alphaArbitrary
+    host <- alphaArbitrary
+    unsafePartial $ case runParser addrSpec (user <> "@" <> host <> ".com") of
+      Right x -> pure x
+    where
+      alphaArbitrary :: Gen String
+      alphaArbitrary = do
+        NonEmpty n ns <- arrayOf1 $ elements $ NonEmpty 'a' $ enumFromTo 'b' 'z'
+        pure $ fromCharArray [n] <> fromCharArray ns
 
 
 localPart :: EmailAddress -> String
