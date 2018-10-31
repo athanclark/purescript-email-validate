@@ -11,10 +11,13 @@
     "output"
   ],
   "dependencies": {
-    "purescript-string-parsers": "^5.0",
-    "purescript-aff": "^5.0",
-    "purescript-transformers": "^4.1",
-    "purescript-generics-rep": "^6.0"
+    "purescript-generics": "^4.0",
+    "purescript-parsing": "^4.3",
+    "purescript-string-parsers": "^3.0",
+    "purescript-aff": "^4.0",
+    "purescript-transformers": "^3.4",
+    "purescript-quickcheck": "^4.6.2",
+    "purescript-argonaut": "^3.1.0"
   },
   "repository": {
     "type": "git",

@@ -11,25 +11,51 @@ where
 import Prelude
 
 import Control.Alt ((<|>))
+import Data.Either (Either (..))
 import Data.Char (fromCharCode)
 import Data.Foldable (fold, intercalate)
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Generic (class Generic, gEq)
+import Data.Enum (enumFromTo)
 import Data.List (List)
-import Data.List.NonEmpty (NonEmptyList)
-import Data.Maybe (fromJust)
-import Data.String (Pattern(..), contains)
-import Data.String.CodeUnits (singleton)
-import Partial.Unsafe (unsafePartial)
-import Text.Parsing.StringParser (Parser)
+import Data.NonEmpty (NonEmpty (..))
+import Data.String (Pattern(..), contains, fromCharArray, singleton)
+import Data.Argonaut (class EncodeJson, class DecodeJson, encodeJson, decodeJson, fail)
+import Text.Parsing.StringParser (Parser, runParser)
 import Text.Parsing.StringParser.Combinators (many, many1, optional, sepBy1)
-import Text.Parsing.StringParser.CodePoints (char, eof, satisfy)
+import Text.Parsing.StringParser.String (char, eof, satisfy)
+import Test.QuickCheck (class Arbitrary)
+import Test.QuickCheck.Gen (Gen, elements, arrayOf1)
+import Partial.Unsafe (unsafePartial)
+
+
 
 -- | Represents an email address.
 newtype EmailAddress = EmailAddress { localPart :: String
                                     , domainPart :: String
                                     }
+
+instance encodeJsonEmailAddress :: EncodeJson EmailAddress where
+  encodeJson x = encodeJson (toString x)
+
+instance decodeJsonEmailAddress :: DecodeJson EmailAddress where
+  decodeJson json = do
+    s <- decodeJson json
+    case runParser addrSpec s of
+      Left e -> fail (show e)
+      Right x -> pure x
+
+instance arbitraryEmailAddress :: Arbitrary EmailAddress where
+  arbitrary = do
+    user <- alphaArbitrary
+    host <- alphaArbitrary
+    unsafePartial $ case runParser addrSpec (user <> "@" <> host <> ".com") of
+      Right x -> pure x
+    where
+      alphaArbitrary :: Gen String
+      alphaArbitrary = do
+        NonEmpty n ns <- arrayOf1 $ elements $ NonEmpty 'a' $ enumFromTo 'b' 'z'
+        pure $ fromCharArray [n] <> fromCharArray ns
+
 
 localPart :: EmailAddress -> String
 localPart (EmailAddress email) = email.localPart
